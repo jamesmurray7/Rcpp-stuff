@@ -64,7 +64,7 @@ mat gammaCalc(const vec& gamma,const mat& tautilde, const rowvec& tausurv, const
 		for(int j = 0; j < L; j++){
 			const rowvec bL = bb.row(j);
 			const rowvec bM = bb.row(i);
-			if(i!=j){
+			if(i!=j){ // The cross-terms...
 				for(int k = 0; k < gh; k++){
 					const colvec xi = getxi(tausurv, musurv, v(k), haz);
 					// Rcpp::Rcout << "xi: " << xi << std::endl;
@@ -87,11 +87,35 @@ mat gammaCalc(const vec& gamma,const mat& tautilde, const rowvec& tausurv, const
 					          2 * gamma[i] * gamma[j] * w[k] * v[k] * v[k] * temp2.t() * tautilde.row(i).t() + 
 					          gamma[i] * gamma[j] * v[k] * w[k] * temp3.t() * tautilde.row(i).t());
 				}
+			}else{ // The diagonal terms d2f/dgdg...
+				for(int k = 0; k < gh; k++){
+					const colvec xi = getxi(tausurv, musurv, v(k), haz);
+					const colvec xitau = xi % tausurv.t();
+					const colvec temp1 = xi % tausurv.t() % xi;
+					const colvec temp2 = temp1 % tau2surv.t();
+					const colvec temp3 = xi % xi % tau2surv.t();
+					
+					M(i,j) += as_scalar(w(k) * bL * Fu.t() * (xi % (Fu * bM.t())) + 
+						      gamma[i] * w[k] * v[k] * bL * Fu.t() * (xi % tau2surv.t() % tautilde.row(i).t()) + 
+						      v[k] * w[k] * xitau.t() * xi + 
+						      2 * gamma[i] * v[k] * w[k] * temp1.t() * (Fu * bL.t()) + 
+						      2 * gamma[i] * gamma[i] * w[k] * v[k] * v[k] * temp2.t() * tautilde.row(i).t() + 
+						      gamma[i] * gamma[i] * v[k] * w[k] * temp3.t() * tautilde.row(i).t());
+					
+				}
 			}
 		}
 	}
 	return M;
 }
+
+//for(L in 1:5){
+          //Igamma.store[k, L] <- w[k] * t(bb[L, ]) %*% t(Fu[[i]]) %*% (xi * Fu[[i]] %*% bb[L, ]) + 
+            //gamma[L] * w[k] * v[k] * t(bb[L, ]) %*% t(Fu[[i]]) %*% (xi * tau2.surv * tau.tilde[L, ]) + 
+            //v[k] * w[k] * crossprod(xi * tau.surv, xi) + 
+            //2 * gamma[L] * v[k] * w[k] * crossprod(xi * tau.surv * xi, Fu[[i]] %*% bb[L, ]) + 
+            //2 * gamma[L]^2 * v[k]^2 * w[k] * crossprod(xi * tau.surv * xi * tau2.surv, tau.tilde[L, ]) + 
+            //gamma[L]^2 * v[k] * w[k] * crossprod(xi * xi * tau2.surv, tau.tilde[L, ])
 
 // Testing JUST the creation of xi with vecsum - returns 
 // [[Rcpp::export]]

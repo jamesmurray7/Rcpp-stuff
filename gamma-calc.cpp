@@ -41,20 +41,28 @@ using namespace arma;
 // i = ROWS (M)
 // j = COLS (L)
 
+
+// Quick test re: col/rowvecs
 // [[Rcpp::export]]
-mat gammaCalc(const vec& gamma,const mat& tautilde, const vec& tausurv, const vec& tau2surv, const vec& musurv, 
+rowvec qtest(mat tautilde, int i){
+  arma::rowvec a = tautilde.row(i);
+  return a;
+}
+
+// [[Rcpp::export]]
+mat gammaCalc(const vec& gamma,const mat& tautilde, const vec& tausurv, const vec& tau2surv, const colvec& musurv, 
               const vec& w, const vec& v, const vec& Fu, const vec& haz, const mat& bb, int L, int gh){
 	mat M = zeros<mat>(L, L);
 	for(int i = 0; i < L; i++){
 		for(int j = 0; j < L; j++){
-			const vec bL = bb.row(j);
-			const vec bM = bb.row(i);
+			const rowvec bL = bb.row(j);
+			const rowvec bM = bb.row(i);
 			if(i!=j){
 				for(int k = 0; k < gh; k++){
-					const vec xi = haz % (musurv * exp(v(k) * tausurv));
-					const vec temp1 = xi % tausurv % xi;
-					const vec temp2 = temp1 % tau2surv;
-					const vec temp3 = xi % xi % tau2surv;
+					const colvec xi = haz % (musurv * exp(v(k) * tausurv));
+					const colvec temp1 = xi % tausurv % xi;
+					const colvec temp2 = temp1 % tau2surv;
+					const colvec temp3 = xi % xi % tau2surv;
 					M(i,j) += as_scalar(w(k) * bL.t() * Fu.t() * (xi % Fu * bM) + 
 					          gamma[i] * w[k] * v[k] * bL.t() * Fu.t() * (xi % tau2surv % tautilde.row(i)) +
 					          2 * gamma[j] * w[k] * v[k] * temp1.t() * (Fu * bM) + 
@@ -66,3 +74,20 @@ mat gammaCalc(const vec& gamma,const mat& tautilde, const vec& tausurv, const ve
 	}
 	return M;
 }
+
+// Testing JUST the creation of xi with this ---
+// [[Rcpp::export]]
+colvec vecsum(const rowvec& tausurv, const colvec& musurv, 
+              vec& v, const rowvec& haz, int gh){
+  rowvec xi = zeros<rowvec>(30);
+  Rcpp::Rcout << "haz: " << haz << std::endl;
+  Rcpp::Rcout << "musurv: " << musurv << std::endl;
+	for(int k = 0; k < gh; k++){
+		Rcpp::Rcout << "v:" << v(k) << std::endl;;
+		Rcpp::Rcout << "v * tau.surv:" << v(k) * tausurv << std::endl;
+		Rcpp::Rcout << "musurv * tau.surv:" << musurv.t() % tausurv << std::endl;
+	  xi += haz % (musurv.t() % exp(v(k) * tausurv));
+	}
+	return xi.t();
+}
+

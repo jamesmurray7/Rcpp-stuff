@@ -3,7 +3,7 @@
 using namespace Rcpp;
 using namespace arma;
 
-// Sigmai.store is this
+// S is this -->
 // lapply(Sigmai.store, function(x) lapply(split(seq(6), rep(1:3, each = 2)), function(y) x[y,y]))
 
 // Lambda update, does all AFTER the E-step 

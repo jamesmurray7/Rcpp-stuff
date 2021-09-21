@@ -47,10 +47,16 @@ mat loopMat(int& L){
 	mat M = zeros<mat>(L,L);
 	for(int i = 1; i <= L; i++){
 		for(int j = 1; j <= L; j++){
-			Rcpp::Rcout << "i:" << i;
-			Rcpp::Rcout << "j:" << j << std::endl;
+		//	Rcpp::Rcout << "i:" << i;
+		//	Rcpp::Rcout << "j:" << j << std::endl;
 			M(i-1,j-1) += i*j;
 		}
 	}
 	return M;
 }
+
+// [[Rcpp::export]]
+mat Ctcp(vec& x){
+	return x * x.t();
+}
+
